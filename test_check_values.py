@@ -7,8 +7,8 @@ def test_check_values_datetime():
         'datetime': ['2024-01-01 12:00:00', '2024-01-02 13:00:00', 'invalid-date'],
         'value1': [1, 2, 3]
     })
-    columns = ['datetime', 'value1']
-    errors = check_values(df, columns)
+    columns_types = [('datetime', 'datetime'), ('value1', 'float')]
+    errors = check_values(df, columns_types)
     assert any('datetime' in e for e in errors)
 
 def test_check_values_numeric():
@@ -16,8 +16,8 @@ def test_check_values_numeric():
         'datetime': ['2024-01-01 12:00:00', '2024-01-02 13:00:00', '2024-01-03 14:00:00'],
         'value1': [1, 'abc', 3]
     })
-    columns = ['datetime', 'value1']
-    errors = check_values(df, columns)
+    columns_types = [('datetime', 'datetime'), ('value1', 'float')]
+    errors = check_values(df, columns_types)
     assert any('value1' in e for e in errors)
 
 def test_check_values_ok():
@@ -25,6 +25,6 @@ def test_check_values_ok():
         'datetime': ['2024-01-01 12:00:00', '2024-01-02 13:00:00', '2024-01-03 14:00:00'],
         'value1': [1, 2.5, np.nan]
     })
-    columns = ['datetime', 'value1']
-    errors = check_values(df, columns)
+    columns_types = [('datetime', 'datetime'), ('value1', 'float')]
+    errors = check_values(df, columns_types)
     assert not errors
