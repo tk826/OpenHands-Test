@@ -16,27 +16,31 @@ else:
 
     # columns.txtから出力カラムを取得
     with open('columns.txt') as f:
-        columns = [line.strip() for line in f if line.strip()]
+        columns_types = [line.strip().split(":") for line in f if line.strip()]
+        columns = [col for col, _type in columns_types]
 
 import numpy as np
 from datetime import datetime as dt
 
-def check_values(df, columns):
+def check_values(df, columns_types):
     errors = []
-    for col in columns:
+    for col, col_type in columns_types:
         if col not in df.columns:
             continue
-        if col == 'datetime':
+        if col_type == 'datetime':
             # 日付時間チェック
             try:
                 pd.to_datetime(df[col], errors='raise')
             except Exception as e:
-                errors.append(f"datetime列に不正な値があります: {e}")
-        else:
+                errors.append(f"{col}列に不正な日付値があります: {e}")
+        elif col_type in ('float', 'int', 'numeric'):
             # 数値チェック
             invalid = ~df[col].apply(lambda x: pd.isna(x) or isinstance(x, (int, float, np.integer, np.floating)) or str(x).replace('.', '', 1).replace('-', '', 1).isdigit())
             if invalid.any():
                 errors.append(f"{col}列に数値でない値があります: {df.loc[invalid, col].tolist()}")
+        else:
+            # 文字列型など他の型はここで追加可能
+            pass
     return errors
 
 
@@ -85,7 +89,7 @@ def check_values(df, columns):
 #     merged = merged.sort_values('datetime')
 #     merged = merged[columns]
     # 値チェック
-    errors = check_values(merged, columns)
+    errors = check_values(merged, columns_types)
     if errors:
         print("値チェックエラー:")
         for err in errors:
@@ -115,7 +119,7 @@ def check_values(df, columns):
         merged = merged.sort_values('datetime')
         merged = merged[columns]
         # 値チェック
-        errors = check_values(merged, columns)
+        errors = check_values(merged, columns_types)
         if errors:
             print("値チェックエラー:")
             for err in errors:

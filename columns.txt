@@ -1,2 +1,2 @@
-datetime
-value1
+datetime:datetime
+value1:float
