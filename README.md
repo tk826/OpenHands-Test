@@ -21,3 +21,8 @@ docker run --rm -it -v $(pwd):/app myapp
 docker run --rm -it -v $(pwd):/app myapp python -m unittest
 ```
 
+### test_check_values.py の実行方法
+```sh
+docker run --rm -it -v $(pwd):/app myapp python test_check_values.py
+```
+

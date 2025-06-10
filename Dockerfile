@@ -8,7 +8,7 @@ RUN pip install boto3 pandas
 WORKDIR /app
 
 # スクリプトとカラム設定ファイルをコピー
-COPY script.py columns.txt ./
+COPY script.py columns.txt test_check_values.py ./
 
 # 入出力ディレクトリを作成
 RUN mkdir -p input/group1 output/group1
