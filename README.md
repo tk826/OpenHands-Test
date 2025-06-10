@@ -5,12 +5,14 @@
 ```sh
 docker build -t myapp .
 ```
-pip install -r requirements.txt
 
 
 ### 実行
 ```sh
 docker run --rm -it -v $(pwd):/app myapp
+```
+```cmd
+docker run --rm -it -v "%cd%":/app myapp
 ```
 
 ## テストのビルドと実行
@@ -20,13 +22,16 @@ docker run --rm -it -v $(pwd):/app myapp
 
 ### テストの実行
 ```sh
-docker run --rm -it -v $(pwd):/app myapp python -m unittest
+docker run --rm -it -v $(pwd):/app myapp python
 ```
-docker run --rm -it -v $(pwd):/app myapp pytest
-
+```cmd
+docker run --rm -it -v "%cd%":/app myapp pytest
+```
 
 ### test_check_values.py の実行方法
 ```sh
 docker run --rm -it -v $(pwd):/app myapp python test_check_values.py
 ```
-
+```cmd
+docker run --rm -it -v "%cd%":/app myapp python test_check_values.py
+```
