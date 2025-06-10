@@ -2,16 +2,43 @@ import pandas as pd
 import glob
 import os
 import sys
+if __name__ != "__main__":
+    # for test import, do not run main logic
+    pass
+else:
 
-# コマンドライン引数で日付のみ受け取る
-if len(sys.argv) < 2:
-    print("Usage: python script.py YYYY-MM-DD")
-    sys.exit(1)
-date = sys.argv[1]
 
-# columns.txtから出力カラムを取得
-with open('columns.txt') as f:
-    columns = [line.strip() for line in f if line.strip()]
+    # コマンドライン引数で日付のみ受け取る
+    if len(sys.argv) < 2:
+        print("Usage: python script.py YYYY-MM-DD")
+        sys.exit(1)
+    date = sys.argv[1]
+
+    # columns.txtから出力カラムを取得
+    with open('columns.txt') as f:
+        columns = [line.strip() for line in f if line.strip()]
+
+import numpy as np
+from datetime import datetime as dt
+
+def check_values(df, columns):
+    errors = []
+    for col in columns:
+        if col not in df.columns:
+            continue
+        if col == 'datetime':
+            # 日付時間チェック
+            try:
+                pd.to_datetime(df[col], errors='raise')
+            except Exception as e:
+                errors.append(f"datetime列に不正な値があります: {e}")
+        else:
+            # 数値チェック
+            invalid = ~df[col].apply(lambda x: pd.isna(x) or isinstance(x, (int, float, np.integer, np.floating)) or str(x).replace('.', '', 1).replace('-', '', 1).isdigit())
+            if invalid.any():
+                errors.append(f"{col}列に数値でない値があります: {df.loc[invalid, col].tolist()}")
+    return errors
+
 
 # --- S3部分（ローカル実行時はコメントアウト） ---
 # import boto3
@@ -57,30 +84,45 @@ with open('columns.txt') as f:
 #     merged = pd.concat(dfs)
 #     merged = merged.sort_values('datetime')
 #     merged = merged[columns]
+    # 値チェック
+    errors = check_values(merged, columns)
+    if errors:
+        print("値チェックエラー:")
+        for err in errors:
+            print(err)
+        return
+
 #     output_key = f"{dst_prefix}{date}.csv"
 #     upload_csv(merged, dst_bucket, output_key)
 #     print(f"Uploaded merged file to s3://{dst_bucket}/{output_key}")
 
 # --- ローカル実行部分 ---
-input_root = "input"
-group_list = [d for d in os.listdir(input_root) if os.path.isdir(os.path.join(input_root, d))]
-if not group_list:
-    print("No group directories found under input/.")
-    sys.exit(0)
+    input_root = "input"
+    group_list = [d for d in os.listdir(input_root) if os.path.isdir(os.path.join(input_root, d))]
+    if not group_list:
+        print("No group directories found under input/.")
+        sys.exit(0)
 
-for group in group_list:
-    input_dir = os.path.join(input_root, group)
-    pattern = os.path.join(input_dir, f"{date}_*.csv")
-    files = sorted(glob.glob(pattern))
-    if not files:
-        print(f"No files found for date {date} in group {group}.")
-        continue
-    dfs = [pd.read_csv(f) for f in files]
-    merged = pd.concat(dfs)
-    merged = merged.sort_values('datetime')
-    merged = merged[columns]
-    output_dir = f"output/{group}/"
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{date}.csv")
-    merged.to_csv(output_file, index=False)
-    print(f"出力ファイル: {output_file}")
+    for group in group_list:
+        input_dir = os.path.join(input_root, group)
+        pattern = os.path.join(input_dir, f"{date}_*.csv")
+        files = sorted(glob.glob(pattern))
+        if not files:
+            print(f"No files found for date {date} in group {group}.")
+            continue
+        dfs = [pd.read_csv(f) for f in files]
+        merged = pd.concat(dfs)
+        merged = merged.sort_values('datetime')
+        merged = merged[columns]
+        # 値チェック
+        errors = check_values(merged, columns)
+        if errors:
+            print("値チェックエラー:")
+            for err in errors:
+                print(err)
+            return
+        output_dir = f"output/{group}/"
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"{date}.csv")
+        merged.to_csv(output_file, index=False)
+        print(f"出力ファイル: {output_file}")
