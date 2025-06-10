@@ -23,25 +23,38 @@ import numpy as np
 from datetime import datetime as dt
 
 def check_values(df, columns_types):
-    errors = []
+    warnings = []
     for col, col_type in columns_types:
         if col not in df.columns:
             continue
         if col_type == 'datetime':
             # 日付時間チェック
-            try:
-                pd.to_datetime(df[col], errors='raise')
-            except Exception as e:
-                errors.append(f"{col}列に不正な日付値があります: {e}")
+            invalid_mask = pd.to_datetime(df[col], errors='coerce').isna() & df[col].notna()
+            if invalid_mask.any():
+                warnings.append(f"[ワーニング] {col}列に不正な日付値があります: {df.loc[invalid_mask, col].tolist()}")
+                df.loc[invalid_mask, col] = ''
         elif col_type in ('float', 'int', 'numeric'):
             # 数値チェック
-            invalid = ~df[col].apply(lambda x: pd.isna(x) or isinstance(x, (int, float, np.integer, np.floating)) or str(x).replace('.', '', 1).replace('-', '', 1).isdigit())
+            def is_number(x):
+                if pd.isna(x):
+                    return True
+                if isinstance(x, (int, float, np.integer, np.floating)):
+                    return True
+                try:
+                    float(x)
+                    return True
+                except Exception:
+                    return False
+            invalid = ~df[col].apply(is_number)
             if invalid.any():
-                errors.append(f"{col}列に数値でない値があります: {df.loc[invalid, col].tolist()}")
+                warnings.append(f"[ワーニング] {col}列に数値でない値があります: {df.loc[invalid, col].tolist()}")
+                df.loc[invalid, col] = ''
         else:
             # 文字列型など他の型はここで追加可能
             pass
-    return errors
+    for w in warnings:
+        print(w)
+    return warnings
 
 
 # --- S3部分（ローカル実行時はコメントアウト） ---
@@ -119,12 +132,7 @@ def check_values(df, columns_types):
         merged = merged.sort_values('datetime')
         merged = merged[columns]
         # 値チェック
-        errors = check_values(merged, columns_types)
-        if errors:
-            print("値チェックエラー:")
-            for err in errors:
-                print(err)
-            return
+        check_values(merged, columns_types)
         output_dir = f"output/{group}/"
         os.makedirs(output_dir, exist_ok=True)
         output_file = os.path.join(output_dir, f"{date}.csv")
