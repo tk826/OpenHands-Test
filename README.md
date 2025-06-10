@@ -5,6 +5,8 @@
 ```sh
 docker build -t myapp .
 ```
+pip install -r requirements.txt
+
 
 ### 実行
 ```sh
@@ -20,6 +22,8 @@ docker run --rm -it -v $(pwd):/app myapp
 ```sh
 docker run --rm -it -v $(pwd):/app myapp python -m unittest
 ```
+docker run --rm -it -v $(pwd):/app myapp pytest
+
 
 ### test_check_values.py の実行方法
 ```sh

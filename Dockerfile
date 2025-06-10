@@ -3,6 +3,9 @@ FROM python:3.12-slim
 
 # 必要なパッケージをインストール
 RUN pip install boto3 pandas
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+
 
 # 作業ディレクトリを作成
 WORKDIR /app
