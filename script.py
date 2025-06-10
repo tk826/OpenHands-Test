@@ -78,6 +78,22 @@ for group in group_list:
     dfs = [pd.read_csv(f) for f in files]
     merged = pd.concat(dfs)
     merged = merged.sort_values('datetime')
+    # --- 値チェック追加 ---
+    for col in columns:
+        if col not in merged.columns:
+            print(f"Column {col} not found in merged data.")
+            continue
+        if col == 'datetime':
+            # 日付時間チェック
+            invalid = ~pd.to_datetime(merged[col], errors='coerce').notna()
+            if invalid.any():
+                print(f"Invalid datetime in column '{col}':\n{merged.loc[invalid, col]}")
+        else:
+            # 数値チェック
+            invalid = ~pd.to_numeric(merged[col], errors='coerce').notna()
+            if invalid.any():
+                print(f"Invalid numeric in column '{col}':\n{merged.loc[invalid, col]}")
+
     merged = merged[columns]
     output_dir = f"output/{group}/"
     os.makedirs(output_dir, exist_ok=True)
