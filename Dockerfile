@@ -14,4 +14,4 @@ COPY script.py columns.txt ./
 RUN mkdir -p input/group1 output/group1
 
 # エントリポイント
-CMD python script.py
+CMD ["python", "script.py"]
