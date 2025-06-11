@@ -1,9 +1,14 @@
 import boto3
+# CSVファイルまたはZIPをS3へアップロードするスクリプト
 import pandas as pd
 import sys
 import io
 import os
 
+    # s3: boto3クライアント
+    # df: アップロードするデータフレーム
+    # bucket: バケット名
+    # key: アップロード先キー
 def upload_csv(s3, df, bucket, key):
     csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
@@ -12,6 +17,7 @@ def upload_csv(s3, df, bucket, key):
 def zip_csv_files(file_list, zip_path):
     import zipfile
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+# コマンドライン引数から入力ファイル/ディレクトリ・S3情報を受け取り、アップロード
         for f in file_list:
             zipf.write(f, arcname=os.path.basename(f))
 

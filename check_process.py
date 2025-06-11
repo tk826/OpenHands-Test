@@ -1,8 +1,11 @@
 import pandas as pd
+# データフレームの値検証とマージ処理を行うスクリプト
 import sys
 import numpy as np
 from datetime import datetime as dt
 
+    # df: 入力データフレーム
+    # columns_types: (カラム名, 型)のリスト
 def check_values(df, columns_types):
     warnings = []
     for col, col_type in columns_types:
@@ -32,6 +35,7 @@ def check_values(df, columns_types):
             pass
     for w in warnings:
         print(w)
+# コマンドライン引数からディレクトリやカラム情報を受け取り、CSVをマージ・検証・保存
     return warnings
 
 if __name__ == "__main__":

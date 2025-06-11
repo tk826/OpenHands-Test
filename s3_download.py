@@ -1,8 +1,13 @@
 import boto3
+# S3からCSVファイルをダウンロードするスクリプト
 import pandas as pd
 import io
 import sys
 
+    # s3: boto3クライアント
+    # bucket: バケット名
+    # prefix: プレフィックス
+    # date: 対象日付（ファイル名に含まれる）
 def list_csv_files(s3, bucket, prefix, date):
     paginator = s3.get_paginator('list_objects_v2')
     files = []
@@ -13,6 +18,7 @@ def list_csv_files(s3, bucket, prefix, date):
                 files.append(key)
     return files
 
+# コマンドライン引数からS3情報・出力先を受け取り、CSVをダウンロード
 def download_csv(s3, bucket, key):
     obj = s3.get_object(Bucket=bucket, Key=key)
     return pd.read_csv(io.BytesIO(obj['Body'].read()))
