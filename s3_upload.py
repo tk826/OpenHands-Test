@@ -65,8 +65,15 @@ def main(args):
         print(f"Uploaded {zip_path} to s3://{dst_bucket}/{key}")
         return 0
     else:
-        print("単一CSVファイルの場合はアップロード処理を行いません。")
-        return 0
+        # 単一CSVファイルの場合はそのままアップロード
+        if input_path.endswith('.csv'):
+            with open(input_path, 'rb') as f:
+                s3.put_object(Bucket=dst_bucket, Key=dst_key, Body=f.read())
+            print(f"Uploaded {input_path} to s3://{dst_bucket}/{dst_key}")
+            return 0
+        else:
+            print("対応していないファイル形式です。")
+            return 1
 
 if __name__ == "__main__":
     import sys

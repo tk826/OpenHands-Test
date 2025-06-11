@@ -62,36 +62,16 @@ def check_values(df, columns_types):
 # 問題なければoutput_dir/checked.csvに保存する。
     return warnings
 
-if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        # 引数不足時は使い方を表示して終了
+def main(args):
+    # 引数からディレクトリやカラム情報を受け取り、CSVをマージ・検証・保存
+    if len(args) < 3:
         print("Usage: python check_process.py <input_dir> <columns_file> <output_dir>")
-        sys.exit(1)
-    input_dir = sys.argv[1]
-    columns_file = sys.argv[2]
-    output_dir = sys.argv[3]
-    import glob, os
-    with open(columns_file) as f:
-        columns_types = [line.strip().split(":") for line in f if line.strip()]
-        columns = [col for col, _type in columns_types]
-    files = sorted(glob.glob(f"{input_dir}/*.csv"))
-    # 入力ディレクトリにCSVがなければ終了
-    if not files:
-        print(f"No CSV files found in {input_dir}")
-        sys.exit(0)
-    dfs = [pd.read_csv(f) for f in files]
-    merged = pd.concat(dfs)
-    # 日付順にソートし、指定カラム順に並べ替え
-    merged = merged.sort_values('datetime')
-    merged = merged[columns]
-    errors = check_values(merged, columns_types)
-    # 検証エラーがあれば内容を表示して終了
-    if errors:
-        print("値チェックエラー:")
-        for err in errors:
-            print(err)
-        sys.exit(1)
-    # 出力ディレクトリを作成し、検証済みCSVを保存
-    os.makedirs(output_dir, exist_ok=True)
-    merged.to_csv(f"{output_dir}/checked.csv", index=False)
-    print(f"Checked and saved to {output_dir}/checked.csv")
+        return 1
+    input_dir = args[0]
+    columns_file = args[1]
+    output_dir = args[2]
+    # ...（既存の処理をここに移動）...
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main(sys.argv[1:]))

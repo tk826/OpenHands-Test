@@ -20,7 +20,7 @@ def run(cmd):
         print(result.stderr)
         sys.exit(result.returncode)
 
-def main():
+def main(args=None):
     # .envから各種パラメータを取得し、
     # S3ダウンロード→検証→S3アップロードの順に実行
     load_dotenv()
@@ -53,4 +53,5 @@ def main():
     run([sys.executable, "s3_upload.py", checked_file, dst_bucket, dst_key, date])
 
 if __name__ == "__main__":
-    main()
+    import sys
+    sys.exit(main(sys.argv[1:]))
