@@ -1,0 +1,69 @@
+# 機能全体の設計書
+
+## 1. 概要
+本システムは、Pythonスクリプトを用いてS3バケットへのファイルのアップロード・ダウンロード、プロセスの監視などの機能を提供します。Docker環境での実行を前提とし、テストも同梱されています。
+
+## 2. 構成ファイル一覧
+- `Dockerfile`: Dockerイメージのビルド定義
+- `requirements.txt`: Python依存パッケージ一覧
+- `check_process.py`: プロセス監視スクリプト
+- `s3_upload.py`: S3へのファイルアップロードスクリプト
+- `s3_download.py`: S3からのファイルダウンロードスクリプト
+- `script.py`: 補助的なスクリプト
+- `test_*.py`: 各種テストスクリプト
+
+## 3. 各機能の詳細
+### 3.1 S3ファイルアップロード (`s3_upload.py`)
+- AWS S3バケットにローカルファイルをアップロード
+- boto3ライブラリを利用
+- エラー処理・ログ出力あり
+
+### 3.2 S3ファイルダウンロード (`s3_download.py`)
+- AWS S3バケットからローカルにファイルをダウンロード
+- boto3ライブラリを利用
+- エラー処理・ログ出力あり
+
+### 3.3 プロセス監視 (`check_process.py`)
+- 指定したプロセスが稼働中かどうかを監視
+- psutilライブラリを利用
+- 結果を標準出力に表示
+
+### 3.4 テスト (`test_*.py`)
+- 各機能ごとにpytestでテストを実装
+- モックを利用したテストも含む
+
+## 4. 実行方法
+### 4.1 Dockerによる実行
+1. `docker build -t myapp .` でイメージをビルド
+2. `docker run --rm -it -v $(pwd):/app myapp` で実行
+
+### 4.2 テストの実行
+- `pytest` コマンドでテストを実行
+
+## 5. セキュリティ・注意事項
+- AWS認証情報は環境変数または設定ファイルで安全に管理
+- 機密情報はリポジトリに含めない
+
+## 6. 拡張性
+- 新たなS3操作や監視機能の追加が容易
+- テスト追加も容易
+
+## 7. 依存ライブラリ
+- boto3
+- psutil
+- pytest（テスト用）
+
+## 8. ディレクトリ構成例
+```
+/workspace/
+  ├── Dockerfile
+  ├── README.md
+  ├── requirements.txt
+  ├── check_process.py
+  ├── s3_upload.py
+  ├── s3_download.py
+  ├── script.py
+  ├── test_check_process.py
+  ├── test_s3_upload.py
+  ├── test_s3_download.py
+```
