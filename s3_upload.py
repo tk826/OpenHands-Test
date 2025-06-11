@@ -39,40 +39,36 @@ def zip_csv_files(file_list, zip_path):
             zipf.write(f, arcname=os.path.basename(f))
 
 
-if __name__ == "__main__":
-    if len(sys.argv) < 5:
-        # 引数不足時は使い方を表示して終了
-        print("Usage: python s3_upload.py <input_file> <dst_bucket> <dst_key> <date>")
-        sys.exit(1)
-    input_path = sys.argv[1]
-    dst_bucket = sys.argv[2]
-    dst_key = sys.argv[3]
-    date = sys.argv[4]
-    s3 = boto3.client('s3')
 
-    # ZIP圧縮処理
-    import glob, tempfile
+def main(args):
+    if len(args) < 4:
+        print("Usage: python s3_upload.py <input_file> <dst_bucket> <dst_key> <date>")
+        return 1
+    input_path = args[0]
+    dst_bucket = args[1]
+    dst_key = args[2]
+    date = args[3]
+    s3 = boto3.client('s3')
+    import tempfile
     if os.path.isdir(input_path):
-        # ディレクトリ指定時はCSVファイルを全て取得
-        csv_files = sorted(glob.glob(os.path.join(input_path, '*.csv')))
-        if not csv_files:
-            print(f"No CSV files found in {input_path}")
-            sys.exit(1)
-        zip_files = []
-        # 10ファイルごとにZIP化
-        for i in range(0, len(csv_files), 10):
-            zip_path = os.path.join(tempfile.gettempdir(), f'batch_{i//10+1}.zip')
-            zip_csv_files(csv_files[i:i+10], zip_path)
-            zip_files.append(zip_path)
-        # 各ZIPをS3へアップロード
-        for idx, zipf in enumerate(zip_files):
-            key = dst_key.replace('.csv', f'_batch{idx+1}.zip') if dst_key.endswith('.csv') else f'{dst_key}_batch{idx+1}.zip'
-            with open(zipf, 'rb') as f:
-                s3.put_object(Bucket=dst_bucket, Key=key, Body=f.read())
-            print(f"Uploaded {zipf} to s3://{dst_bucket}/{key}")
+        import zipfile
+        zip_path = os.path.join(tempfile.gettempdir(), f'{os.path.basename(input_path)}.zip')
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, _, files in os.walk(input_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, input_path)
+                    zipf.write(file_path, arcname=arcname)
+        key = dst_key.replace('.csv', '.zip') if dst_key.endswith('.csv') else dst_key + '.zip'
+        with open(zip_path, 'rb') as f:
+            s3.put_object(Bucket=dst_bucket, Key=key, Body=f.read())
+        print(f"Uploaded {zip_path} to s3://{dst_bucket}/{key}")
+        return 0
     else:
-        # 単一CSVファイルの場合は従来通り
-        df = pd.read_csv(input_path)
-        upload_csv(s3, df, dst_bucket, dst_key)
-        print(f"Uploaded {input_path} to s3://{dst_bucket}/{dst_key}")
+        print("単一CSVファイルの場合はアップロード処理を行いません。")
+        return 0
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main(sys.argv[1:]))
 

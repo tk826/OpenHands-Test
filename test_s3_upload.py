@@ -37,3 +37,31 @@ def test_zip_csv_files(tmp_path):
     with zipfile.ZipFile(zip2) as z2:
         assert z2.namelist() == ["file_10.csv"]
 
+
+def test_zip_directory_and_upload(monkeypatch, tmp_path):
+    import zipfile
+    import types
+    # Create dummy files in a directory
+    d = tmp_path / "data"
+    d.mkdir()
+    (d / "a.csv").write_text("a,b\n1,2")
+    (d / "b.txt").write_text("hello")
+    (d / "subdir").mkdir()
+    (d / "subdir" / "c.csv").write_text("x,y\n3,4")
+    # Patch boto3.client to dummy
+    uploaded = {}
+    class DummyS3:
+        def put_object(self, Bucket, Key, Body):
+            uploaded[(Bucket, Key)] = Body
+    monkeypatch.setattr("boto3.client", lambda *a, **kw: DummyS3())
+    # Patch sys.argv
+    import s3_upload
+    s3_upload.main([str(d), "bucket", "key.csv", "20250101"])
+    # Check upload
+    assert ("bucket", "key.zip") in uploaded
+    # Check zip content
+    from io import BytesIO
+    zf = zipfile.ZipFile(BytesIO(uploaded[("bucket", "key.zip")]))
+    names = set(zf.namelist())
+    assert names == {"a.csv", "b.txt", "subdir/c.csv"}
+
