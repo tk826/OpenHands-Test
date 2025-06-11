@@ -1,9 +1,11 @@
 import subprocess
+# 一連のS3ダウンロード・検証・アップロード処理をまとめて実行するスクリプト
 import sys
 import os
 from dotenv import load_dotenv
 
 
+    # コマンドを実行し、標準出力・エラーを表示
 def run(cmd):
     print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True)
