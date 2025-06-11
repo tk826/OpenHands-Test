@@ -25,25 +25,27 @@ graph TD;
 6. 複数CSVのZIP圧縮
 
 ## 4. 各機能の詳細
-### 4.1 各機能のフローチャート
-
-#### S3からのCSVファイル一覧取得
+### 4.1 S3からのCSVファイル一覧取得
 ```mermaid
 graph TD;
     A[開始] --> B[S3からCSV一覧取得]
     B --> C[CSVファイルリスト取得完了]
     C --> D[終了]
 ```
+- 指定バケット・プレフィックス・日付でCSVファイルをリストアップ
+- `s3_download.py` の `list_csv_files` 関数で実装
 
-#### CSVファイルのダウンロード
+### 4.2 CSVファイルのダウンロード
 ```mermaid
 graph TD;
     A[開始] --> B[CSVダウンロード]
     B --> C[DataFrameへ読み込み]
     C --> D[終了]
 ```
+- S3から対象CSVをダウンロードしPandas DataFrameとして読み込み
+- `s3_download.py` の `download_csv` 関数で実装
 
-#### データ検証
+### 4.3 データ検証
 ```mermaid
 graph TD;
     A[開始] --> B[型チェック]
@@ -51,53 +53,38 @@ graph TD;
     C --> D[警告出力]
     D --> E[終了]
 ```
+- columns.txtで定義された型情報に基づき、各カラムの型チェックを実施
+- 日付型・数値型の不正値を検出し、警告を出力
+- `check_process.py` の `check_values` 関数で実装
 
-#### データ加工
+### 4.4 データ加工
 ```mermaid
 graph TD;
     A[開始] --> B[DataFrame加工]
     B --> C[加工内容拡張]
     C --> D[終了]
 ```
+- 必要に応じてDataFrameの加工処理を実施（例：欠損値補完、不要カラム削除等）
+- 加工内容は要件に応じて拡張可能
 
-#### 加工済みCSVのS3アップロード
+### 4.5 加工済みCSVのS3アップロード
 ```mermaid
 graph TD;
     A[開始] --> B[CSVをS3へアップロード]
     B --> C[アップロード完了]
     C --> D[終了]
 ```
+- 加工後のDataFrameをCSVとしてS3へアップロード
+- `s3_upload.py` の `upload_csv` 関数で実装
 
-#### 複数CSVのZIP圧縮
+
+### 4.6 複数CSVのZIP圧縮
 ```mermaid
 graph TD;
     A[開始] --> B[CSVファイルをZIP圧縮]
     B --> C[ZIPファイル作成完了]
     C --> D[終了]
 ```
-
-### 4.2 S3からのCSVファイル一覧取得
-- 指定バケット・プレフィックス・日付でCSVファイルをリストアップ
-- `s3_download.py` の `list_csv_files` 関数で実装
-
-### 4.3 CSVファイルのダウンロード
-- S3から対象CSVをダウンロードしPandas DataFrameとして読み込み
-- `s3_download.py` の `download_csv` 関数で実装
-
-### 4.4 データ検証
-- columns.txtで定義された型情報に基づき、各カラムの型チェックを実施
-- 日付型・数値型の不正値を検出し、警告を出力
-- `check_process.py` の `check_values` 関数で実装
-
-### 4.5 データ加工
-- 必要に応じてDataFrameの加工処理を実施（例：欠損値補完、不要カラム削除等）
-- 加工内容は要件に応じて拡張可能
-
-### 4.6 加工済みCSVのS3アップロード
-- 加工後のDataFrameをCSVとしてS3へアップロード
-- `s3_upload.py` の `upload_csv` 関数で実装
-
-### 4.7 複数CSVのZIP圧縮
 - 複数CSVファイルをZIP形式でまとめる
 - `s3_upload.py` の `zip_csv_files` 関数で実装
 
