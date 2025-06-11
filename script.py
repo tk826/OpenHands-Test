@@ -1,6 +1,8 @@
 import subprocess
 import sys
 import os
+from dotenv import load_dotenv
+
 
 def run(cmd):
     print(f"Running: {' '.join(cmd)}")
@@ -11,10 +13,20 @@ def run(cmd):
         sys.exit(result.returncode)
 
 def main():
-    if len(sys.argv) != 9:
-        print("Usage: python script.py <src_bucket> <src_prefix> <date> <download_dir> <columns_file> <checked_dir> <dst_bucket> <dst_key>")
+    load_dotenv()
+    src_bucket = os.getenv('SRC_BUCKET')
+    src_prefix = os.getenv('SRC_PREFIX')
+    date = os.getenv('DATE')
+    download_dir = os.getenv('DOWNLOAD_DIR')
+    columns_file = os.getenv('COLUMNS_FILE')
+    checked_dir = os.getenv('CHECKED_DIR')
+    dst_bucket = os.getenv('DST_BUCKET')
+    dst_key = os.getenv('DST_KEY')
+
+    required_vars = [src_bucket, src_prefix, date, download_dir, columns_file, checked_dir, dst_bucket, dst_key]
+    if not all(required_vars):
+        print("Error: One or more required environment variables are missing in .env file.")
         sys.exit(1)
-    src_bucket, src_prefix, date, download_dir, columns_file, checked_dir, dst_bucket, dst_key = sys.argv[1:9]
 
     # 1. S3 Download
     run([sys.executable, "s3_download.py", src_bucket, src_prefix, date, download_dir])
