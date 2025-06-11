@@ -25,68 +25,37 @@ graph TD;
 6. 複数CSVのZIP圧縮
 
 ## 4. 各機能の詳細
-### 4.1 S3からのCSVファイル一覧取得
-```mermaid
-graph TD;
-    A[開始] --> B[S3からCSV一覧取得]
-    B --> C[CSVファイルリスト取得完了]
-    C --> D[終了]
-```
-- 指定バケット・プレフィックス・日付でCSVファイルをリストアップ
-- `s3_download.py` の `list_csv_files` 関数で実装
 
-### 4.2 CSVファイルのダウンロード
+本設計では、関連する機能をまとめて記載しています。
+### 4.1 S3からのCSVファイル一覧取得・ダウンロード
 ```mermaid
 graph TD;
-    A[開始] --> B[CSVダウンロード]
+    A[開始] --> B[S3からCSV一覧取得・ダウンロード]
     B --> C[DataFrameへ読み込み]
     C --> D[終了]
 ```
-- S3から対象CSVをダウンロードしPandas DataFrameとして読み込み
-- `s3_download.py` の `download_csv` 関数で実装
+- 指定バケット・プレフィックス・日付でCSVファイルをリストアップし、対象CSVをダウンロードしてPandas DataFrameとして読み込み
+- `s3_download.py` の `list_csv_files` および `download_csv` 関数で実装
 
-### 4.3 データ検証
+### 4.2 データ検証・加工
 ```mermaid
 graph TD;
-    A[開始] --> B[型チェック]
-    B --> C[日付・数値チェック]
-    C --> D[警告出力]
-    D --> E[終了]
-```
-- columns.txtで定義された型情報に基づき、各カラムの型チェックを実施
-- 日付型・数値型の不正値を検出し、警告を出力
-- `check_process.py` の `check_values` 関数で実装
-
-### 4.4 データ加工
-```mermaid
-graph TD;
-    A[開始] --> B[DataFrame加工]
-    B --> C[加工内容拡張]
+    A[開始] --> B[型チェック・日付/数値チェック]
+    B --> C[警告出力・DataFrame加工]
     C --> D[終了]
 ```
-- 必要に応じてDataFrameの加工処理を実施（例：欠損値補完、不要カラム削除等）
-- 加工内容は要件に応じて拡張可能
+- columns.txtで定義された型情報に基づき、各カラムの型チェックや日付型・数値型の不正値検出、警告出力を行い、必要に応じてDataFrameの加工処理（例：欠損値補完、不要カラム削除等）を実施
+- `check_process.py` の `check_values` 関数等で実装
 
-### 4.5 加工済みCSVのS3アップロード
+### 4.3 加工済みCSVのS3アップロード・複数CSVのZIP圧縮
 ```mermaid
 graph TD;
-    A[開始] --> B[CSVをS3へアップロード]
-    B --> C[アップロード完了]
+    A[開始] --> B[CSVをS3へアップロード/ZIP圧縮]
+    B --> C[アップロード・ZIPファイル作成完了]
     C --> D[終了]
 ```
-- 加工後のDataFrameをCSVとしてS3へアップロード
-- `s3_upload.py` の `upload_csv` 関数で実装
-
-
-### 4.6 複数CSVのZIP圧縮
-```mermaid
-graph TD;
-    A[開始] --> B[CSVファイルをZIP圧縮]
-    B --> C[ZIPファイル作成完了]
-    C --> D[終了]
-```
-- 複数CSVファイルをZIP形式でまとめる
-- `s3_upload.py` の `zip_csv_files` 関数で実装
+- 加工後のDataFrameをCSVとしてS3へアップロードし、必要に応じて複数CSVファイルをZIP形式でまとめる
+- `s3_upload.py` の `upload_csv` および `zip_csv_files` 関数で実装
 
 ## 5. ディレクトリ構成
 - script.py: メインバッチスクリプト
