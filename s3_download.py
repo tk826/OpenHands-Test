@@ -7,10 +7,10 @@ import pandas as pd
 import io
 import sys
 
-    # s3: boto3クライアント
-    # bucket: バケット名
-    # prefix: プレフィックス
-    # date: 対象日付（ファイル名に含まれる）
+# s3: boto3クライアント
+# bucket: バケット名
+# prefix: プレフィックス
+# date: 対象日付（ファイル名に含まれる）
 def list_csv_files(s3, bucket, prefix, date):
     paginator = s3.get_paginator('list_objects_v2')
     files = []

@@ -8,10 +8,10 @@ import os
 from dotenv import load_dotenv
 
 
-    # コマンドを実行し、標準出力・エラーを表示
-    # サブプロセスとしてコマンドを実行し、
-    # 結果を標準出力・標準エラーに表示します。
-    # 異常終了時は即時exitします。
+# コマンドを実行し、標準出力・エラーを表示
+# サブプロセスとしてコマンドを実行し、
+# 結果を標準出力・標準エラーに表示します。
+# 異常終了時は即時exitします。
 def run(cmd):
     print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True)

@@ -7,14 +7,15 @@ import sys
 import numpy as np
 from datetime import datetime as dt
 
-    # df: 入力データフレーム
-    # columns_types: (カラム名, 型)のリスト
-    #
-    # columns_typesの型は 'datetime', 'float', 'int', 'numeric' などを想定。
-    # 各カラムの値が指定型に合致するかを検証し、不正な値があれば警告リストに追加し、
-    # データフレーム上の該当値を空文字に置き換えます。
-    #
-    # 戻り値: 警告メッセージのリストdef check_values(df, columns_types):
+# df: 入力データフレーム
+# columns_types: (カラム名, 型)のリスト
+#
+# columns_typesの型は 'datetime', 'float', 'int', 'numeric' などを想定。
+# 各カラムの値が指定型に合致するかを検証し、不正な値があれば警告リストに追加し、
+# データフレーム上の該当値を空文字に置き換えます。
+#
+# 戻り値: 警告メッセージのリスト
+def check_values(df, columns_types):
     warnings = []
     for col, col_type in columns_types:
         # 各カラムごとに型チェックを実施

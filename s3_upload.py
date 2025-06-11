@@ -9,10 +9,10 @@ import sys
 import io
 import os
 
-    # s3: boto3クライアント
-    # df: アップロードするデータフレーム
-    # bucket: バケット名
-    # key: アップロード先キー
+# s3: boto3クライアント
+# df: アップロードするデータフレーム
+# bucket: バケット名
+# key: アップロード先キー
 def upload_csv(s3, df, bucket, key):
     csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
