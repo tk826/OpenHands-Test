@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from script import check_values
+from check_process import check_values
 
 def test_check_values_datetime(capfd):
     df = pd.DataFrame({

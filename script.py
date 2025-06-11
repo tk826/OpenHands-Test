@@ -1,140 +1,42 @@
-import pandas as pd
-import glob
-import os
+import subprocess
 import sys
-if __name__ != "__main__":
-    # for test import, do not run main logic
-    pass
-else:
+import os
+from dotenv import load_dotenv
 
 
-    # コマンドライン引数で日付のみ受け取る
-    if len(sys.argv) < 2:
-        print("Usage: python script.py YYYY-MM-DD")
+def run(cmd):
+    print(f"Running: {' '.join(cmd)}")
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    print(result.stdout)
+    if result.returncode != 0:
+        print(result.stderr)
+        sys.exit(result.returncode)
+
+def main():
+    load_dotenv()
+    src_bucket = os.getenv('SRC_BUCKET')
+    src_prefix = os.getenv('SRC_PREFIX')
+    date = os.getenv('DATE')
+    download_dir = os.getenv('DOWNLOAD_DIR')
+    columns_file = os.getenv('COLUMNS_FILE')
+    checked_dir = os.getenv('CHECKED_DIR')
+    dst_bucket = os.getenv('DST_BUCKET')
+    dst_key = os.getenv('DST_KEY')
+
+    required_vars = [src_bucket, src_prefix, date, download_dir, columns_file, checked_dir, dst_bucket, dst_key]
+    if not all(required_vars):
+        print("Error: One or more required environment variables are missing in .env file.")
         sys.exit(1)
-    date = sys.argv[1]
 
-    # columns.txtから出力カラムを取得
-    with open('columns.txt') as f:
-        columns_types = [line.strip().split(":") for line in f if line.strip()]
-        columns = [col for col, _type in columns_types]
+    # 1. S3 Download
+    run([sys.executable, "s3_download.py", src_bucket, src_prefix, date, download_dir])
 
-import numpy as np
-from datetime import datetime as dt
+    # 2. Check Process
+    run([sys.executable, "check_process.py", download_dir, columns_file, checked_dir])
 
-def check_values(df, columns_types):
-    warnings = []
-    for col, col_type in columns_types:
-        if col not in df.columns:
-            continue
-        if col_type == 'datetime':
-            # 日付時間チェック
-            invalid_mask = pd.to_datetime(df[col], errors='coerce').isna() & df[col].notna()
-            if invalid_mask.any():
-                warnings.append(f"[ワーニング] {col}列に不正な日付値があります: {df.loc[invalid_mask, col].tolist()}")
-                df.loc[invalid_mask, col] = ''
-        elif col_type in ('float', 'int', 'numeric'):
-            # 数値チェック
-            def is_number(x):
-                if pd.isna(x):
-                    return True
-                if isinstance(x, (int, float, np.integer, np.floating)):
-                    return True
-                try:
-                    float(x)
-                    return True
-                except Exception:
-                    return False
-            invalid = ~df[col].apply(is_number)
-            if invalid.any():
-                warnings.append(f"[ワーニング] {col}列に数値でない値があります: {df.loc[invalid, col].tolist()}")
-                df.loc[invalid, col] = ''
-        else:
-            # 文字列型など他の型はここで追加可能
-            pass
-    for w in warnings:
-        print(w)
-    return warnings
+    # 3. S3 Upload
+    checked_file = os.path.join(checked_dir, "checked.csv")
+    run([sys.executable, "s3_upload.py", checked_file, dst_bucket, dst_key, date])
 
-
-# --- S3部分（ローカル実行時はコメントアウト） ---
-# import boto3
-# import io
-# s3 = boto3.client('s3')
-# src_bucket = 'your-source-bucket'
-# dst_bucket = 'your-destination-bucket'
-# src_prefix = f'input/{group}/'
-# dst_prefix = f'output/{group}/'
-# def list_csv_files(bucket, prefix, date):
-#     paginator = s3.get_paginator('list_objects_v2')
-#     files = []
-#     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-#         for obj in page.get('Contents', []):
-#             key = obj['Key']
-#             if key.endswith('.csv') and date in key:
-#                 files.append(key)
-#     return files
-# def download_csv(bucket, key):
-#     obj = s3.get_object(Bucket=bucket, Key=key)
-#     return pd.read_csv(io.BytesIO(obj['Body'].read()))
-# def upload_csv(df, bucket, key):
-#     csv_buffer = io.StringIO()
-#     df.to_csv(csv_buffer, index=False)
-#     s3.put_object(Bucket=bucket, Key=key, Body=csv_buffer.getvalue())
-# --- S3実行部分 ---
-# group_list_s3 = []
-# response = s3.list_objects_v2(Bucket=src_bucket, Prefix='input/', Delimiter='/')
-# for prefix in response.get('CommonPrefixes', []):
-#     group = prefix['Prefix'].split('/')[1]
-#     group_list_s3.append(group)
-# for group in group_list_s3:
-#     src_prefix = f'input/{group}/'
-#     dst_prefix = f'output/{group}/'
-#     files = list_csv_files(src_bucket, src_prefix, date)
-#     if not files:
-#         print(f"No files found for date {date} in group {group} (S3).")
-#         continue
-#     dfs = [download_csv(src_bucket, f) for f in files]
-#     if not dfs:
-#         continue
-#     # 共通処理（S3/ローカルどちらでも使う）
-#     merged = pd.concat(dfs)
-#     merged = merged.sort_values('datetime')
-#     merged = merged[columns]
-    # 値チェック
-    errors = check_values(merged, columns_types)
-    if errors:
-        print("値チェックエラー:")
-        for err in errors:
-            print(err)
-        return
-
-#     output_key = f"{dst_prefix}{date}.csv"
-#     upload_csv(merged, dst_bucket, output_key)
-#     print(f"Uploaded merged file to s3://{dst_bucket}/{output_key}")
-
-# --- ローカル実行部分 ---
-    input_root = "input"
-    group_list = [d for d in os.listdir(input_root) if os.path.isdir(os.path.join(input_root, d))]
-    if not group_list:
-        print("No group directories found under input/.")
-        sys.exit(0)
-
-    for group in group_list:
-        input_dir = os.path.join(input_root, group)
-        pattern = os.path.join(input_dir, f"{date}_*.csv")
-        files = sorted(glob.glob(pattern))
-        if not files:
-            print(f"No files found for date {date} in group {group}.")
-            continue
-        dfs = [pd.read_csv(f) for f in files]
-        merged = pd.concat(dfs)
-        merged = merged.sort_values('datetime')
-        merged = merged[columns]
-        # 値チェック
-        check_values(merged, columns_types)
-        output_dir = f"output/{group}/"
-        os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, f"{date}.csv")
-        merged.to_csv(output_file, index=False)
-        print(f"出力ファイル: {output_file}")
+if __name__ == "__main__":
+    main()
