@@ -22,6 +22,7 @@ graph TD;
 ## 4. 各機能の詳細
 
 本設計では、関連する機能をまとめて記載しています。
+
 ### 4.1 S3からのCSVファイル一覧取得・ダウンロード
 ```mermaid
 graph TD;
@@ -43,6 +44,15 @@ graph TD;
 - columns.txtで定義された型情報に基づき、各カラムの型チェックや日付型・数値型の不正値検出、警告出力を行い、必要に応じてDataFrameの加工処理（例：欠損値補完、不要カラム削除等）を実施
 - `check_process.py` の `check_values` 関数等で実装
 
+#### columns.txtの定義内容と使用方法
+- columns.txtには、CSVファイルの各カラム名とそのデータ型を「カラム名:型」の形式で1行ずつ記載します。
+  例:
+    datetime:datetime
+    value1:float
+- サポートされる型は、datetime, float, int, str などです。
+- 本ファイルはデータ検証処理で参照され、各カラムの型チェックや不正値検出に利用されます。
+- columns.txtのパスは.envファイルのCOLUMNS_FILEで指定します。
+
 ### 4.3 ZIP圧縮・S3アップロード
 ```mermaid
 graph TD;
@@ -51,7 +61,7 @@ graph TD;
     C --> E[終了]
 ```
 - 複数CSVファイルをZIP形式でまとめて、S3へアップロードする
-- `s3_upload.py` の `zip_csv_files` および ``upload_csv 関数で実装
+- `s3_upload.py` の `zip_csv_files` および `upload_csv` 関数で実装
 
 ## 5. ディレクトリ構成
 - script.py: メインバッチスクリプト
@@ -62,7 +72,21 @@ graph TD;
 - test_*.py: 各種ユニットテスト
 
 ## 6. 環境変数
-- .envファイルでS3バケット名、プレフィックス、日付、ダウンロードディレクトリ等を指定
+- .envファイルでS3バケット名、プレフィックス、日付、ダウンロードディレクトリ等を指定します。
+- 下記の環境変数を.envファイルで定義します。
+
+| 変数名         | 説明                                 |
+|----------------|--------------------------------------|
+| SRC_BUCKET     | 入力元S3バケット名                   |
+| SRC_PREFIX     | 入力元S3プレフィックス（ディレクトリ）|
+| DATE           | 対象日付（例: 20240601）             |
+| DOWNLOAD_DIR   | ダウンロード先ディレクトリ           |
+| COLUMNS_FILE   | columns.txtのパス                    |
+| CHECKED_DIR    | 検証済みデータの出力ディレクトリ     |
+| DST_BUCKET     | 出力先S3バケット名                   |
+| DST_KEY        | 出力先S3キー（ファイル名/パス）      |
+
+- 例: columns.txtのパスはCOLUMNS_FILEで指定します。
 
 ---
 2025年6月11日 作成
